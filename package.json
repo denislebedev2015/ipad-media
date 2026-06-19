@@ -1,0 +1,10 @@
+{
+  "name": "ipad-media-backend",
+  "version": "1.0.0",
+  "description": "Медиа-посредник для iPad Mini",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {}
+}
