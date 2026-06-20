@@ -1,33 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Медиатека iPad Mini 1</title>
+    <title>Тест Медиасервера</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 30px; background: #eef2f3; color: #333; margin: 0; padding: 20px; }
-        #status { font-size: 20px; color: #555; margin-bottom: 20px; font-weight: bold; }
-        video { width: 100%; max-width: 800px; background: #000; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .error-text { color: red; font-size: 18px; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f7f6; color: #333; }
+        .box { max-width: 600px; margin: 30px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 6px; margin-bottom: 20px; }
+        button { width: 95%; padding: 15px; font-size: 18px; color: white; background: #28a745; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        #status { font-size: 18px; color: #666; margin: 20px 0; font-weight: bold; }
+        video { width: 100%; max-width: 600px; background: #000; border-radius: 8px; margin-top: 20px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="status">Поиск видеофайла на странице...</div>
-    <div id="player-container"></div>
+    <div class="box">
+        <h2>Ручной тест медиатеки</h2>
+        <p>Вставьте ссылку на страницу с видео (например, из Vimeo или Rutube):</p>
+        
+        <!-- Поле для ручного ввода ссылки -->
+        <input type="text" id="videoUrlInput" placeholder="https://vimeo.com... или любой другой сайт">
+        <button id="sendBtn">Запустить разбор ссылки</button>
+
+        <div id="status">Ожидание ввода ссылки...</div>
+        
+        <!-- Скрытый плеер, который покажется при успехе -->
+        <video id="myPlayer" controls playsinline></video>
+    </div>
 
     <script>
-        function startParsing() {
-            // 1. Получаем адрес страницы из строки браузера
-            var urlParams = new URLSearchParams(window.location.search);
-            var videoUrl = urlParams.get('url');
+        function doManualTest() {
+            var inputField = document.getElementById('videoUrlInput');
+            var statusDiv = document.getElementById('status');
+            var player = document.getElementById('myPlayer');
+            
+            var videoUrl = inputField.value.trim();
             
             if (!videoUrl) {
-                document.getElementById('status').innerText = 'Ошибка: Ссылка не найдена. Нажмите букмарклет на сайте с видео!';
+                statusDiv.innerText = 'Ошибка: Поле ввода пустое!';
                 return;
             }
 
-            // 2. Отправляем запрос на ваш сервер Hugging Face
+            statusDiv.innerText = 'Отправка запроса на Hugging Face...';
+            player.style.display = 'none'; // Скрываем плеер на время загрузки
+
+            // AJAX запрос к вашему облаку Hugging Face
             var xhr = new XMLHttpRequest();
             var hfServerUrl = 'https://hf.space' + encodeURIComponent(videoUrl);
             
@@ -36,31 +55,32 @@
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        // Получаем чистую прямую ссылку на видео (например, ссылку на .mp4)
                         var directVideoLink = xhr.responseText.trim();
                         
-                        document.getElementById('status').innerText = 'Видео готово к просмотру!';
-                        
-                        // 3. Создаем стандартный плеер прямо на странице для старого Safari
-                        // Кнопка controls добавляет кнопки "Плей", "Пауза" и громкость
-                        document.getElementById('player-container').innerHTML = 
-                            '<video src="' + directVideoLink + '" controls autoplay playsinline>Ваш iPad не поддерживает этот формат видео.</video>';
+                        // Проверяем, вернул ли сервер хоть что-то похожее на ссылку
+                        if (directVideoLink.indexOf('http') === 0) {
+                            statusDiv.innerHTML = '<span style="color:green;">Успех! Видеофайл найден.</span>';
+                            
+                            // Загружаем ссылку в плеер и показываем его
+                            player.src = directVideoLink;
+                            player.style.display = 'block';
+                            player.play();
+                        } else {
+                            statusDiv.innerHTML = '<span style="color:red;">Сервер вернул ошибку: ' + directVideoLink + '</span>';
+                        }
                     } else {
-                        document.getElementById('status').innerHTML = 
-                            '<span class="error-text">Ошибка: Не удалось извлечь видео. Возможно, этот сайт защищен.</span>';
+                        statusDiv.innerHTML = '<span style="color:red;">Сбой сети. Код ошибки: ' + xhr.status + '. Возможно, сервер Hugging Face "спит" или заблокирован.</span>';
                     }
                 }
             };
             xhr.send();
         }
 
-        // Запуск на старом стандарте ES5
-        window.onload = startParsing;
+        // Привязываем клик по кнопке на чистом ES5
+        window.onload = function() {
+            document.getElementById('sendBtn').onclick = doManualTest;
+        };
     </script>
 </body>
 </html>
-рого на старом стандарте JavaScript (ES5)
-        window.onload = startParsing;
-    </script>
-</body>
-</html>
+
