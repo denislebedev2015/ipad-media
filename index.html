@@ -5,28 +5,29 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 60px; background: #eef2f3; color: #333; }
-        .btn { display: inline-block; padding: 20px 40px; font-size: 24px; color: white; background: #ff5500; text-decoration: none; border-radius: 12px; margin-top: 30px; font-weight: bold; }
-        #status { font-size: 20px; color: #555; }
+        body { font-family: sans-serif; text-align: center; padding-top: 30px; background: #eef2f3; color: #333; margin: 0; padding: 20px; }
+        #status { font-size: 20px; color: #555; margin-bottom: 20px; font-weight: bold; }
+        video { width: 100%; max-width: 800px; background: #000; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .error-text { color: red; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <div id="status">Обработка вашей ссылки сервером...</div>
-    <div id="container"></div>
+    <div id="status">Поиск видеофайла на странице...</div>
+    <div id="player-container"></div>
 
     <script>
         function startParsing() {
-            // 1. Извлекаем адрес видео, который передал букмарклет из адресной строки
+            // 1. Получаем адрес страницы из строки браузера
             var urlParams = new URLSearchParams(window.location.search);
             var videoUrl = urlParams.get('url');
             
             if (!videoUrl) {
-                document.getElementById('status').innerText = 'Ошибка: Ссылка не передана. Откройте видео на любом сайте и нажмите букмарклет!';
+                document.getElementById('status').innerText = 'Ошибка: Ссылка не найдена. Нажмите букмарклет на сайте с видео!';
                 return;
             }
 
-            // 2. Делаем старый добрый AJAX запрос к вашему серверу Hugging Face
+            // 2. Отправляем запрос на ваш сервер Hugging Face
             var xhr = new XMLHttpRequest();
             var hfServerUrl = 'https://hf.space' + encodeURIComponent(videoUrl);
             
@@ -35,26 +36,30 @@
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
+                        // Получаем чистую прямую ссылку на видео (например, ссылку на .mp4)
                         var directVideoLink = xhr.responseText.trim();
                         
-                        // 3. Формируем ссылку под протокол приложения VLC (vlc://)
-                        var vlcLink = 'vlc://' + directVideoLink.replace(/^https?:\/\//, '');
+                        document.getElementById('status').innerText = 'Видео готово к просмотру!';
                         
-                        document.getElementById('status').innerText = 'Ссылка успешно получена!';
-                        document.getElementById('container').innerHTML = 
-                            '<a href="' + vlcLink + '" class="btn">Открыть видео в VLC Плеере</a>';
-                        
-                        // Автоматический редирект: пытаемся сразу перекинуть поток в VLC на iPad
-                        window.location.href = vlcLink;
+                        // 3. Создаем стандартный плеер прямо на странице для старого Safari
+                        // Кнопка controls добавляет кнопки "Плей", "Пауза" и громкость
+                        document.getElementById('player-container').innerHTML = 
+                            '<video src="' + directVideoLink + '" controls autoplay playsinline>Ваш iPad не поддерживает этот формат видео.</video>';
                     } else {
-                        document.getElementById('status').innerText = 'Ошибка: Сервер не смог извлечь прямую ссылку. Возможно, сайт не поддерживается.';
+                        document.getElementById('status').innerHTML = 
+                            '<span class="error-text">Ошибка: Не удалось извлечь видео. Возможно, этот сайт защищен.</span>';
                     }
                 }
             };
             xhr.send();
         }
 
-        // Запуск строго на старом стандарте JavaScript (ES5)
+        // Запуск на старом стандарте ES5
+        window.onload = startParsing;
+    </script>
+</body>
+</html>
+рого на старом стандарте JavaScript (ES5)
         window.onload = startParsing;
     </script>
 </body>
