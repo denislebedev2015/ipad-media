@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Медиатека iPad Mini 1</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 60px; background: #eef2f3; color: #333; }
+        .btn { display: inline-block; padding: 20px 40px; font-size: 24px; color: white; background: #ff5500; text-decoration: none; border-radius: 12px; margin-top: 30px; font-weight: bold; }
+        #status { font-size: 20px; color: #555; }
+    </style>
+</head>
+<body>
+
+    <div id="status">Обработка вашей ссылки сервером...</div>
+    <div id="container"></div>
+
+    <script>
+        function startParsing() {
+            // 1. Извлекаем адрес видео, который передал букмарклет из адресной строки
+            var urlParams = new URLSearchParams(window.location.search);
+            var videoUrl = urlParams.get('url');
+            
+            if (!videoUrl) {
+                document.getElementById('status').innerText = 'Ошибка: Ссылка не передана. Откройте видео на любом сайте и нажмите букмарклет!';
+                return;
+            }
+
+            // 2. Делаем старый добрый AJAX запрос к вашему серверу Hugging Face
+            var xhr = new XMLHttpRequest();
+            var hfServerUrl = 'https://hf.space' + encodeURIComponent(videoUrl);
+            
+            xhr.open('GET', hfServerUrl, true);
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var directVideoLink = xhr.responseText.trim();
+                        
+                        // 3. Формируем ссылку под протокол приложения VLC (vlc://)
+                        var vlcLink = 'vlc://' + directVideoLink.replace(/^https?:\/\//, '');
+                        
+                        document.getElementById('status').innerText = 'Ссылка успешно получена!';
+                        document.getElementById('container').innerHTML = 
+                            '<a href="' + vlcLink + '" class="btn">Открыть видео в VLC Плеере</a>';
+                        
+                        // Автоматический редирект: пытаемся сразу перекинуть поток в VLC на iPad
+                        window.location.href = vlcLink;
+                    } else {
+                        document.getElementById('status').innerText = 'Ошибка: Сервер не смог извлечь прямую ссылку. Возможно, сайт не поддерживается.';
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        // Запуск строго на старом стандарте JavaScript (ES5)
+        window.onload = startParsing;
+    </script>
+</body>
+</html>
